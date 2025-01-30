@@ -1,5 +1,7 @@
 # My Aya Snippets
 
+This repo is inspired from this project [https://github.com/yukinakanaka/aya-lab?tab=readme-ov-file]
+
 ## Install Prerequisite
 
 For mac users, please install `lima` to run a virtual machine.
@@ -13,4 +15,3 @@ brew install lima
 ```bash
 lima start lima-template/ubuntu-focal.yaml
 ```
-
