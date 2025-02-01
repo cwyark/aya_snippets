@@ -46,7 +46,7 @@ pub fn build_ebpf(opts: Options) -> Result<(), anyhow::Error> {
         "+nightly-2024-07-23",
         "build",
         target.as_str(),
-        "-z",
+        "-Z",
         "build-std=core",
     ];
     if opts.release {
