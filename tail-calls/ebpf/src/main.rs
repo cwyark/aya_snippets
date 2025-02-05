@@ -7,6 +7,7 @@
 #[allow(dead_code)]
 mod bindings;
 mod maps;
+mod progs;
 mod shared_state;
 
 #[panic_handler]

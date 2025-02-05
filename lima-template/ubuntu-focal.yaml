@@ -2,25 +2,19 @@
 cpus: 4
 memory: "4GiB"
 
-arch: "x86_64"
+arch: "aarch64"
 
 images:
-  - location: "https://cloud-images.ubuntu.com/releases/focal/release-20250109/ubuntu-20.04-server-cloudimg-amd64.img"
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
     arch: "x86_64"
-    digest: "sha256:f7381c60041dd53e7525d2be13b8ede7db79419af511005c5c3a7c658c1f62e8"
-  - location: "https://cloud-images.ubuntu.com/releases/focal/release-20250109/ubuntu-20.04-server-cloudimg-arm64.img"
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
     arch: "aarch64"
-    digest: "sha256:e568a681d6bfc1c7c91a86d81be974783c517403cbf3bf7a885cbfe1bfe84d4d"
 
-# vmType: "vz"
-# mountType: "virtiofs"
-vmType: "qemu"
-mountType: "9p"
+vmType: "vz"
+mountType: "virtiofs"
 
 mounts:
   - location: "~"
-    writable: true
-  - location: "/tmp/lima"
     writable: true
 
 containerd:
@@ -34,7 +28,7 @@ provision:
       set -eux -o pipefail    
       wget https://apt.llvm.org/llvm.sh
       chmod +x llvm.sh
-      ./llvm.sh `8` all
+      ./llvm.sh `19` all
       apt-get update -y
       apt-get install -y pkg-config libssl-dev
       apt-get install -y libzstd-dev
@@ -61,6 +55,12 @@ provision:
       apt-get install -y bpfcc-tools
       apt-get install -y python3-pip
       sysctl -w kernel.bpf_stats_enabled=1
+
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      apt install -y cmake gettext
 
   - mode: system
     script: |
@@ -97,6 +97,7 @@ provision:
     script: |
       #!/bin/bash
       set -eux -o pipefail
+      # curl -fLJ https://github.com/Netflix/bpftop/releases/latest/download/bpftop-aarch64-unknown-linux-gnu -o bpftop && chmod +x bpftop
       curl -fLJ https://github.com/Netflix/bpftop/releases/latest/download/bpftop-x86_64-unknown-linux-gnu -o bpftop && chmod +x bpftop
       mv bpftop /usr/bin/bpftop
 
@@ -134,7 +135,7 @@ probes:
     script: |
       #!/bin/bash
       set -eux -o pipefail
-      if ! timeout 30s bash -c "until test -e /tmp/done >/dev/null 2>&1; do sleep 3; done"; then
+      if ! timeout 60s bash -c "until test -e /tmp/done >/dev/null 2>&1; do sleep 3; done"; then
         echo >&2 "user setup is not done yet"
         exit 1
       fi
