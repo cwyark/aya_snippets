@@ -30,10 +30,10 @@ impl<T> ::core::fmt::Debug for __IncompleteArrayField<T> {
         fmt.write_str("__IncompleteArrayField")
     }
 }
-pub type __u32 = ::aya_ebpf::cty::c_uint;
-pub type u32_ = __u32;
 pub type __kernel_pid_t = ::aya_ebpf::cty::c_int;
 pub type pid_t = __kernel_pid_t;
+pub type __u32 = ::aya_ebpf::cty::c_uint;
+pub type u32_ = __u32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct trace_entry {
