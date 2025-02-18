@@ -1,6 +1,8 @@
 # My Aya Snippets
 
-This repo is inspired from this project [https://github.com/yukinakanaka/aya-lab?tab=readme-ov-file]
+This repo is inspired from these projects 
+- [https://github.com/yukinakanaka/aya-lab
+- https://github.com/vadorovsky/aya-examples
 
 ## Install Prerequisite
 
