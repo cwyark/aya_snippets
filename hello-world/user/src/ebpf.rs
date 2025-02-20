@@ -1,7 +1,7 @@
 use aya::{include_bytes_aligned, programs::RawTracePoint, Ebpf};
 use aya_log::EbpfLogger;
 
-pub const ATTACHED_FUNCTION: &str = "handler_tp";
+pub const ATTACHED_FUNCTION: &str = "handle_tp";
 pub const TRACE_POINT: &str = "sys_enter_write";
 
 pub struct EbpfExecutionContext {
