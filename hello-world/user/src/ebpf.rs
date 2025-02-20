@@ -1,62 +1,47 @@
-use aya::{
-    include_bytes_aligned,
-    maps::{MapData, ProgramArray},
-    programs::BtfTracePoint,
-    Btf, Ebpf,
-};
+use aya::{include_bytes_aligned, programs::RawTracePoint, Ebpf};
 use aya_log::EbpfLogger;
 
-pub const ATTACHED_FUNCTION: &str = "prog1";
-pub const TRACE_POINT: &str = "sched_process_exec";
+pub const ATTACHED_FUNCTION: &str = "handler_tp";
+pub const TRACE_POINT: &str = "sys_enter_write";
 
-pub struct BpfExecutionContext {
+pub struct EbpfExecutionContext {
     #[allow(dead_code)]
-    bpf: Ebpf,
+    ebpf: Ebpf,
 }
 
-pub fn configure_bpf() -> anyhow::Result<BpfExecutionContext> {
-    let mut bpf = load_bpf_program()?;
-    initialize_bpf_logger(&mut bpf)?;
+pub fn configure_bpf() -> anyhow::Result<EbpfExecutionContext> {
+    let mut ebpf = load_ebpf_program()?;
 
-    let btf = Btf::from_sys_fs()?;
-    let mut tail_call_map = ProgramArray::try_from(bpf.take_map(TAIL_CALL_MAP).unwrap())?;
+    initialize_ebpf_logger(&mut ebpf)?;
 
-    load_programs(&mut bpf, &btf, &mut tail_call_map)?;
+    load_programs(&mut ebpf)?;
 
-    Ok(BpfExecutionContext { bpf, tail_call_map })
+    Ok(EbpfExecutionContext { ebpf: ebpf })
 }
 
-fn load_bpf_program() -> anyhow::Result<Bpf> {
+fn load_ebpf_program() -> anyhow::Result<Ebpf> {
     #[cfg(debug_assertions)]
-    let bpf = Bpf::load(include_bytes_aligned!(
+    let ebpf = Ebpf::load(include_bytes_aligned!(
         "../../target/bpfel-unknown-none/debug/ebpf"
     ))?;
     #[cfg(not(debug_assertions))]
-    let bpf = Bpf::load(include_bytes_aligned!(
+    let ebpf = Ebpf::load(include_bytes_aligned!(
         "../../target/bpfel-unknown-none/release/ebpf"
     ))?;
-    Ok(bpf)
+    Ok(ebpf)
 }
 
-fn initialize_bpf_logger(bpf: &mut Bpf) -> anyhow::Result<()> {
-    if let Err(e) = EbpfLogger::init(bpf) {
+fn initialize_ebpf_logger(ebpf: &mut Ebpf) -> anyhow::Result<()> {
+    if let Err(e) = EbpfLogger::init(ebpf) {
         // This can happen if you remove all log statements from your eBPF program.
-        warn!("Failed to initialize eBPF logger: {}", e);
+        println!("Failed to initialize eBPF logger: {}", e);
     }
     Ok(())
 }
 
-fn load_programs(
-    bpf: &mut Bpf,
-    btf: &Btf,
-    tail_call_map: &mut ProgramArray<MapData>,
-) -> anyhow::Result<()> {
-    let flags = 0;
-
-    let attached_program: &mut BtfTracePoint =
-        bpf.program_mut(ATTACHED_FUNCTION).unwrap().try_into()?;
-    attached_program.load(TRACE_POINT, btf)?;
-    attached_program.attach()?;
-
+fn load_programs(ebpf: &mut Ebpf) -> anyhow::Result<()> {
+    let program: &mut RawTracePoint = ebpf.program_mut(ATTACHED_FUNCTION).unwrap().try_into()?;
+    program.load()?;
+    program.attach(TRACE_POINT)?;
     Ok(())
 }
