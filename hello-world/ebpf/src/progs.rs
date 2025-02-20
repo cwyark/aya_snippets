@@ -1,16 +1,16 @@
 use aya_ebpf::{
-    helpers::bpf_get_current_pid_tgid, macros::btf_tracepoint, programs::BtfTracePointContext,
+    helpers::bpf_get_current_pid_tgid, macros::raw_tracepoint, programs::RawTracePointContext,
 };
 
-#[btf_tracepoint(function = "handle_tp")]
-pub fn handle_tp(ctx: BtfTracePointContext) -> u32 {
-    match unsafe { try_handle_tp(ctx) } {
+#[raw_tracepoint]
+pub fn handle_tp(ctx: RawTracePointContext) -> u32 {
+    match { try_handle_tp(ctx) } {
         Ok(ret) => ret,
         Err(ret) => ret.try_into().unwrap(),
     }
 }
 
-unsafe fn try_handle_tp(ctx: BtfTracePointContext) -> Result<u32, i64> {
+fn try_handle_tp(ctx: RawTracePointContext) -> Result<u32, u64> {
     let pid = (bpf_get_current_pid_tgid() >> 32) as u32;
     Ok(0)
 }
