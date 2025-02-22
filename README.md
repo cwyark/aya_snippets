@@ -1,8 +1,9 @@
 # My Aya Snippets
 
-This repo is inspired from these projects 
+This repo is inspired from these projects
+
 - [https://github.com/yukinakanaka/aya-lab
-- https://github.com/vadorovsky/aya-examples
+- <https://github.com/vadorovsky/aya-examples>
 
 ## Install Prerequisite
 

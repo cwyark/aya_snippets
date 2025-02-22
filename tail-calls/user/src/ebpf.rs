@@ -2,7 +2,7 @@ use aya::{
     include_bytes_aligned,
     maps::{MapData, ProgramArray},
     programs::BtfTracePoint,
-    Bpf, Btf,
+    Btf, Ebpf,
 };
 
 use aya_log::EbpfLogger;
@@ -17,7 +17,7 @@ pub const TRACE_POINT: &str = "sched_process_exec";
 /// that prevent the BPF programs and maps from being unloaded
 pub struct BpfExecutionContext {
     #[allow(dead_code)]
-    bpf: Bpf,
+    ebpf: Ebpf,
     #[allow(dead_code)]
     tail_call_map: ProgramArray<MapData>,
 }
@@ -33,7 +33,10 @@ pub fn configure_bpf() -> anyhow::Result<BpfExecutionContext> {
 
     load_programs(&mut bpf, &btf, &mut tail_call_map)?;
 
-    Ok(BpfExecutionContext { bpf, tail_call_map })
+    Ok(BpfExecutionContext {
+        ebpf: bpf,
+        tail_call_map,
+    })
 }
 
 fn set_memory_limit() -> anyhow::Result<()> {
@@ -49,19 +52,19 @@ fn set_memory_limit() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn load_bpf_program() -> anyhow::Result<Bpf> {
+fn load_bpf_program() -> anyhow::Result<Ebpf> {
     #[cfg(debug_assertions)]
-    let bpf = Bpf::load(include_bytes_aligned!(
+    let bpf = Ebpf::load(include_bytes_aligned!(
         "../../target/bpfel-unknown-none/debug/ebpf"
     ))?;
     #[cfg(not(debug_assertions))]
-    let bpf = Bpf::load(include_bytes_aligned!(
+    let bpf = Ebpf::load(include_bytes_aligned!(
         "../../target/bpfel-unknown-none/release/ebpf"
     ))?;
     Ok(bpf)
 }
 
-fn initialize_bpf_logger(bpf: &mut Bpf) -> anyhow::Result<()> {
+fn initialize_bpf_logger(bpf: &mut Ebpf) -> anyhow::Result<()> {
     if let Err(e) = EbpfLogger::init(bpf) {
         // This can happen if you remove all log statements from your eBPF program.
         warn!("Failed to initialize eBPF logger: {}", e);
@@ -70,7 +73,7 @@ fn initialize_bpf_logger(bpf: &mut Bpf) -> anyhow::Result<()> {
 }
 
 fn load_programs(
-    bpf: &mut Bpf,
+    bpf: &mut Ebpf,
     btf: &Btf,
     tail_call_map: &mut ProgramArray<MapData>,
 ) -> anyhow::Result<()> {
@@ -89,7 +92,7 @@ fn load_programs(
 }
 
 fn load_tail_called_program(
-    bpf: &mut Bpf,
+    bpf: &mut Ebpf,
     btf: &Btf,
     tail_call_map: &mut ProgramArray<MapData>,
     function_name: &str,

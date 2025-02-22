@@ -5,10 +5,10 @@ memory: "4GiB"
 arch: "aarch64"
 
 images:
-  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
-    arch: "x86_64"
   - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
     arch: "aarch64"
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
 
 vmType: "vz"
 mountType: "virtiofs"
@@ -30,8 +30,8 @@ provision:
       chmod +x llvm.sh
       ./llvm.sh `19` all
       apt-get update -y
-      apt-get install -y pkg-config libssl-dev
-      apt-get install -y libzstd-dev
+      apt-get install -y pkg-config libssl-dev --no-install-recommends
+      apt-get install -y libzstd-dev --no-install-recommends
 
       LLVMFILES=/usr/bin/llvm-*
       CLANGFILES=/usr/bin/clang-*
@@ -49,18 +49,18 @@ provision:
       #!/bin/bash
       set -eux -o pipefail
       apt-get update -y
-      apt-get install -y apt-transport-https ca-certificates curl jq
-      apt-get install -y linux-tools-common linux-tools-$(uname -r)
-      apt-get install -y libelf-dev libcap-dev libpcap-dev libbfd-dev binutils-dev build-essential make
-      apt-get install -y bpfcc-tools
-      apt-get install -y python3-pip
+      apt-get install -y apt-transport-https ca-certificates curl jq --no-install-recommends
+      apt-get install -y linux-tools-common linux-tools-$(uname -r) --no-install-recommends
+      apt-get install -y libelf-dev libcap-dev libpcap-dev libbfd-dev binutils-dev build-essential make --no-install-recommends
+      apt-get install -y bpfcc-tools --no-install-recommends
+      apt-get install -y python3-pip --no-install-recommends
       sysctl -w kernel.bpf_stats_enabled=1
 
   - mode: system
     script: |
       #!/bin/bash
       set -eux -o pipefail
-      apt install -y cmake gettext
+      apt install -y cmake gettext --no-install-recommends
 
   - mode: system
     script: |
@@ -70,23 +70,28 @@ provision:
       deb http://ddebs.ubuntu.com $(lsb_release -cs)-updates main restricted universe multiverse
       deb http://ddebs.ubuntu.com $(lsb_release -cs)-proposed main restricted universe multiverse" | \
       sudo tee -a /etc/apt/sources.list.d/ddebs.list
-      sudo apt install ubuntu-dbgsym-keyring
+      sudo apt install ubuntu-dbgsym-keyring --no-install-recommends
       sudo apt update
-      apt-get install -y bpftrace-dbgsym
+      apt-get install -y bpftrace-dbgsym --no-install-recommends
 
   - mode: system
     script: |
       #!/bin/bash
       set -eux -o pipefail
-      apt-get install -y libbpf-dev
+      apt-get install -y libbpf-dev --no-install-recommends
       ln -sf /usr/include/$(uname -m)-linux-gnu/asm /usr/include/asm
+
+  - mode: system
+    script: |
+      #!/bin/bash
+      rm -rf /var/lib/apt/lists/*
+
 
   - mode: system
     script: |
       #!/bin/bash
       set -eux -o pipefail
       ln -sf /usr/lib/$(uname -m)-linux-gnu/libbfd.so /usr/lib/libbfd.so
-
       git clone --recurse-submodules https://github.com/libbpf/bpftool.git
       cd bpftool
       git submodule update --init
@@ -97,8 +102,7 @@ provision:
     script: |
       #!/bin/bash
       set -eux -o pipefail
-      # curl -fLJ https://github.com/Netflix/bpftop/releases/latest/download/bpftop-aarch64-unknown-linux-gnu -o bpftop && chmod +x bpftop
-      curl -fLJ https://github.com/Netflix/bpftop/releases/latest/download/bpftop-x86_64-unknown-linux-gnu -o bpftop && chmod +x bpftop
+      curl -fLJ https://github.com/Netflix/bpftop/releases/latest/download/bpftop-aarch64-unknown-linux-gnu -o bpftop && chmod +x bpftop
       mv bpftop /usr/bin/bpftop
 
   - mode: user
@@ -127,16 +131,6 @@ probes:
       set -eux -o pipefail
       if ! timeout 30s bash -c "until command -v bpftool >/dev/null 2>&1; do sleep 3; done"; then
         echo >&2 "bpftool is not installed yet"
-        exit 1
-      fi
-    hint: See "/var/log/cloud-init-output.log". in the guest
-
-  - description: "user setup to be done"
-    script: |
-      #!/bin/bash
-      set -eux -o pipefail
-      if ! timeout 60s bash -c "until test -e /tmp/done >/dev/null 2>&1; do sleep 3; done"; then
-        echo >&2 "user setup is not done yet"
         exit 1
       fi
     hint: See "/var/log/cloud-init-output.log". in the guest
