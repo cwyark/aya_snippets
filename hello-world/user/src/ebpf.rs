@@ -1,7 +1,8 @@
-use aya::{include_bytes_aligned, programs::RawTracePoint, Ebpf};
+use aya::{include_bytes_aligned, programs::TracePoint, Ebpf};
 use aya_log::EbpfLogger;
 
 pub const ATTACHED_FUNCTION: &str = "handle_tp";
+pub const TRACE_CATEGORY: &str = "syscalls";
 pub const TRACE_POINT: &str = "sys_enter_write";
 
 pub struct EbpfExecutionContext {
@@ -9,14 +10,14 @@ pub struct EbpfExecutionContext {
     ebpf: Ebpf,
 }
 
-pub fn configure_bpf() -> anyhow::Result<EbpfExecutionContext> {
+pub fn configure_ebpf() -> anyhow::Result<EbpfExecutionContext> {
     let mut ebpf = load_ebpf_program()?;
 
     initialize_ebpf_logger(&mut ebpf)?;
 
     load_programs(&mut ebpf)?;
 
-    Ok(EbpfExecutionContext { ebpf: ebpf })
+    Ok(EbpfExecutionContext { ebpf })
 }
 
 fn load_ebpf_program() -> anyhow::Result<Ebpf> {
@@ -40,8 +41,8 @@ fn initialize_ebpf_logger(ebpf: &mut Ebpf) -> anyhow::Result<()> {
 }
 
 fn load_programs(ebpf: &mut Ebpf) -> anyhow::Result<()> {
-    let program: &mut RawTracePoint = ebpf.program_mut(ATTACHED_FUNCTION).unwrap().try_into()?;
+    let program: &mut TracePoint = ebpf.program_mut(ATTACHED_FUNCTION).unwrap().try_into()?;
     program.load()?;
-    program.attach(TRACE_POINT)?;
+    program.attach(TRACE_CATEGORY, TRACE_POINT)?;
     Ok(())
 }
